@@ -1,0 +1,56 @@
+name: Check for errors
+
+on:
+  push:
+    branches:
+      - main
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  binaries:
+    name: Binaries
+
+    strategy:
+      matrix:
+        include:
+          # Linux targets; cached
+          - { target: x86_64-unknown-linux-gnu, os: ubuntu-latest, cross: true }
+          - {
+              target: x86_64-unknown-linux-musl,
+              os: ubuntu-latest,
+              cross: true,
+            }
+          - {
+              target: aarch64-unknown-linux-musl,
+              os: ubuntu-latest,
+              cross: true,
+            }
+
+          # macOS targets; un-cached
+          - { target: x86_64-apple-darwin, os: macOS-latest, cross: false }
+          - { target: aarch64-apple-darwin, os: macOS-latest, cross: false }
+
+          # Windows works, but is extremely slow and un-cached
+          - { target: x86_64-pc-windows-msvc, os: windows-latest, cross: false }
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain
+        with:
+          toolchain: stable
+          override: true
+          profile: minimal
+          target: ${{ matrix.target }}
+
+      - name: Check
+        uses: actions-rs/cargo
+        with:
+          command: check
+          use-cross: ${{ matrix.cross }}
