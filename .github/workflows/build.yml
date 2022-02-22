@@ -37,12 +37,13 @@ jobs:
           - { target: x86_64-pc-windows-msvc, os: windows-latest, cross: false }
 
     runs-on: ${{ matrix.os }}
+
     steps:
       - name: Checkout
         uses: actions/checkout
 
       - name: Setup Rust
-        uses: actions-rs/toolchain
+        uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
@@ -50,7 +51,7 @@ jobs:
           target: ${{ matrix.target }}
 
       - name: Check
-        uses: actions-rs/cargo
+        uses: actions-rs/cargo@v1
         with:
           command: check
           use-cross: ${{ matrix.cross }}
