@@ -10,33 +10,10 @@ defaults:
     shell: bash
 
 jobs:
-  binaries:
-    name: Binaries
+  error-check:
+    name: Check for errors
 
-    strategy:
-      matrix:
-        include:
-          # Linux targets; cached
-          - { target: x86_64-unknown-linux-gnu, os: ubuntu-latest, cross: true }
-          - {
-              target: x86_64-unknown-linux-musl,
-              os: ubuntu-latest,
-              cross: true,
-            }
-          - {
-              target: aarch64-unknown-linux-musl,
-              os: ubuntu-latest,
-              cross: true,
-            }
-
-          # macOS targets; un-cached
-          - { target: x86_64-apple-darwin, os: macOS-latest, cross: false }
-          - { target: aarch64-apple-darwin, os: macOS-latest, cross: false }
-
-          # Windows works, but is extremely slow and un-cached
-          - { target: x86_64-pc-windows-msvc, os: windows-latest, cross: false }
-
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
@@ -50,8 +27,10 @@ jobs:
           profile: minimal
           target: ${{ matrix.target }}
 
+      - name: Install OpenSSL
+        run: sudo apt-get install openssl -y
+
       - name: Check
         uses: actions-rs/cargo@v1
         with:
           command: check
-          use-cross: ${{ matrix.cross }}
