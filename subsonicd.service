@@ -1,0 +1,15 @@
+[Unit]
+Description=A Subsonic / Airsonic compatible playback daemon.
+Documentation=https://github.com/Guusvanmeerveld/subsonicd
+Wants=sound.target
+After=sound.target
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/subsonicd
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

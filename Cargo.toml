@@ -1,5 +1,9 @@
 [package]
 name = "subsonicd"
+description = "A Subsonic / Airsonic compatible playback daemon."
+repository = "https://github.com/Guusvanmeerveld/subsonicd"
+license-file = "LICENSE"
+readme = "README.md"
 version = "0.1.0"
 edition = "2021"
 
@@ -16,10 +20,26 @@ tokio = { version = "1", features = ["full"] }
 hyper-tls = "0.5.0"
 querystring = "1.1.0"
 
+daemonize = "0.4.1"
+
 keyring = "1.1.2"
+rpassword = "5.0"
+
+whoami = "1.2.1"
+dirs = "4.0.0"
 
 # Serde
 serde_derive = "1.0"
 serde-xml-rs = "0.5.1"
 serde = "1.0"
 toml = "0.5.8"
+
+[package.metadata.deb]
+maintainer = "Guus van Meerveld"
+copyright = "MIT"
+assets = [
+    ["target/release/subsonicd", "usr/bin/", "755"],
+    ["README.md", "usr/share/doc/subsonicd/README", "644"],
+    ["config.toml", "etc/subsonicd/", "644"],
+    ["subsonicd.service", "etc/systemd/user/", "644"],
+]

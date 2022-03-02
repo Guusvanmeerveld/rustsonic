@@ -1,9 +1,8 @@
 use crate::config::Config;
 use crate::constants;
-use crate::keyring;
 use crate::utils;
 
-use hyper::{body::Buf, Client, Uri};
+use hyper::{body::Buf, client::HttpConnector, Client, Uri};
 use hyper_tls::HttpsConnector;
 
 use querystring;
@@ -49,37 +48,36 @@ impl Api<'_> {
      * Checks if credentials and api version are compatible
      */
     pub async fn ping(&self) -> bool {
-        let response: SubsonicResponse = self
-            .make_request("ping.view")
-            .await
-            .expect("Ping remote server");
+        let response = self.make_request("ping.view").await;
 
-        response.status == ApiStatus::Ok
+        match response {
+            Ok(value) => value.status == ApiStatus::Ok,
+            Err(_) => false,
+        }
     }
 
     async fn make_request(&self, location: &str) -> utils::Result<SubsonicResponse> {
+        let username = self
+            .config
+            .subsonic
+            .username
+            .as_ref()
+            .expect("No username was provided");
+
         // Create uri
         let user_uri: Uri = self
             .config
             .subsonic
             .url
+            .as_ref()
+            .expect("No url provided")
             .parse::<Uri>()
             .expect("Parsing the user provided uri");
 
         // Create salt
         let salt = utils::random_string(8);
 
-        let password = keyring::get_password(&self.config.subsonic.username);
-
-        let password = match password {
-            Ok(password) => password,
-            Err(_) => self
-                .config
-                .subsonic
-                .password
-                .clone()
-                .expect("Read password from config"),
-        };
+        let password = self.config.subsonic.password.as_ref().unwrap();
 
         let salt_and_password = format!("{}{}", password, salt);
 
@@ -88,7 +86,7 @@ impl Api<'_> {
         let query_params = querystring::stringify(vec![
             ("v", constants::API_VERSION),
             ("c", constants::APPLICATION_NAME),
-            ("u", &self.config.subsonic.username),
+            ("u", &username),
             ("s", &salt),
             ("t", &token),
         ]);
@@ -105,10 +103,9 @@ impl Api<'_> {
         .parse::<Uri>()
         .expect("Parsing the uri");
 
-        // Http request
-        let https = HttpsConnector::new();
+        let connector = HttpConnector::new();
 
-        let client = Client::builder().build::<_, hyper::Body>(https);
+        let client = Client::builder().build::<_, hyper::Body>(connector);
 
         let request = client.get(uri);
 
@@ -119,8 +116,7 @@ impl Api<'_> {
             .await
             .expect("Aggregating the response");
 
-        let xml: SubsonicResponse =
-            serde_xml_rs::from_reader(body.reader()).expect("Parsing the xml response");
+        let xml: SubsonicResponse = serde_xml_rs::from_reader(body.reader())?;
 
         Ok(xml)
     }

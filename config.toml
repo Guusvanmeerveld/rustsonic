@@ -1,0 +1,5 @@
+[subsonic]                                                                                                                                                                                                         
+username = "guest1"                                                                                                                                                                                                
+url = "http://demo.subsonic.org"                                                                                                                                                                                   
+password = "guest"                                                                                                                                                                                                 
+    
